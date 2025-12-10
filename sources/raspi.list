@@ -1,0 +1,3 @@
+# /etc/apt/sources.list.d/raspi.list
+deb [signed-by=/usr/share/keyrings/raspberrypi.gpg.key] https://archive.raspberrypi.org/debian/ bookworm main untested
+#deb [signed-by=/usr/share/keyrings/raspberrypi.gpg.key] https://mirrors.tuna.tsinghua.edu.cn/raspberrypi/ bookworm main untested

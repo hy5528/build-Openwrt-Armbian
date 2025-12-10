@@ -1,0 +1,12 @@
+# Source: moodeaudio
+# Site: https://github.com/moode-player
+# Repository: moodeaudio / moOde package repository
+# Description: A certifiably-awesome open-source package repository curated by moodeaudio, hosted by Cloudsmith.
+
+
+deb [signed-by=/usr/share/keyrings/moodeaudio-m8y-archive-keyring.gpg] https://dl.cloudsmith.io/public/moodeaudio/m8y/deb/debian bookworm main
+
+deb-src [signed-by=/usr/share/keyrings/moodeaudio-m8y-archive-keyring.gpg] https://dl.cloudsmith.io/public/moodeaudio/m8y/deb/debian bookworm main
+# /etc/apt/sources.list.d/moodeaudio-m8y.list
+deb [signed-by=/usr/share/keyrings/moodeaudio-m8y-archive-keyring.gpg] https://dl.cloudsmith.io/public/moodeaudio/m8y/deb/raspbian bookworm main
+deb-src [signed-by=/usr/share/keyrings/moodeaudio-m8y-archive-keyring.gpg] https://dl.cloudsmith.io/public/moodeaudio/m8y/deb/raspbian bookworm main
