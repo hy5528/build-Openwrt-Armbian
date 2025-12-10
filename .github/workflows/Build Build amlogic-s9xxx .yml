@@ -1,4 +1,4 @@
-name: Build Armbian Customize Board
+name: Build amlogic-s9xxx 
   
 on:  
   workflow_dispatch:  
