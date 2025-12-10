@@ -1,0 +1,127 @@
+name: Build Armbian uefi-x86 Board
+  
+on:  
+  workflow_dispatch:  
+    inputs:
+      ssh:
+        description: 'SSH connection to Actions'
+        required: true
+        default: 'false'
+        type: choice
+        options:
+          - true
+          - false
+      RELEASE:  
+        description: 'Release name' 
+        default: 'jammy'
+        required: true  
+        type: choice
+        options:
+          - jammy
+          - bookworm
+          - noble
+          - bullseye
+      Version:
+        description: 'Armbian Version'
+        default: 'main'
+        required: false 
+        type: choice
+        options: 
+          - main
+          - v25.05
+          - v24.11
+      FSTYPE:
+        description: 'Armbian ROOTFS TYPE'
+        default: 'ext4'
+        required: false 
+        type: choice
+        options: 
+          - ext4
+          - f2fs
+          - btrfs
+          - nilfs2
+          - xfs
+          - nfs
+
+env:
+  TZ: Asia/Jakarta
+  
+jobs:  
+  build-armbian:  
+    permissions:
+      contents: write
+    runs-on: ubuntu-22.04  
+    steps:  
+      - name: Checkout  
+        uses: actions/checkout@v3    
+
+      - name: Initialization environment
+        id: init
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          docker_images_ids=$(docker images -q)
+          if [ -n "$docker_images_ids" ]; then
+            docker rmi $docker_images_ids
+          fi
+          docker image prune -a -f
+          sudo -E apt-get -y purge azure-cli ghc* zulu* llvm* firefox google* dotnet* openjdk* mysql* php* mongodb* dotnet* moby* snapd* android* || true
+          sudo -E apt-get -qq autoremove --purge
+          sudo -E apt-get -qq clean
+          sudo timedatectl set-timezone "${TZ}"
+          sudo mkdir -p /mnt/workdir
+          sudo chown $USER:$GROUPS /mnt/workdir
+          df -Th
+  
+      - name: Download source code
+        working-directory: /mnt/workdir
+        run: |
+          df -hT ${PWD}
+          git clone -q --single-branch --depth=1 --branch=${{ github.event.inputs.Version }} https://github.com/armbian/build.git build
+          ln -sf /mnt/workdir/build $GITHUB_WORKSPACE/build
+ 
+      - name: SSH connection to Actions
+        uses: csexton/debugger-action@master
+        if: (github.event.inputs.ssh == 'true' && github.event.inputs.ssh  != 'false') || contains(github.event.action, 'ssh')
+
+      - name: Compile Armbian [ ${{ inputs.BOARD }} ${{ inputs.RELEASE }} ]
+        if: (github.event.inputs.ssh != 'true')
+        run: |
+          cd build/
+          echo "Compiling for board: $BOARD"
+          ./compile.sh BOARD=uefi-x86 RELEASE=${{ inputs.RELEASE }} BRANCH=current BUILD_MINIMAL=yes BUILD_DESKTOP=no KERNEL_CONFIGURE=no \
+            BUILD_ONLY=default EXPERT=yes COMPRESS_OUTPUTIMAGE="sha,xz" SHARE_LOG=yes INSTALL_HEADERS=yes ROOTFS_TYPE=${{ inputs.FSTYPE }}
+          if [ $? -ne 0 ]; then
+            echo "Compilation failed for board: uefi-x86" >&2
+            return 1
+          fi   
+          
+      - name: Set current year and month  
+        run: |  
+          echo "CURRENT_YEAR_MONTH=$(date +'%Y%m')" >> $GITHUB_ENV  
+
+      - name: Prepare Release Metadata
+        run: |
+          find ${{ github.workspace }}/build/output
+          latest_image=$(ls ${{ github.workspace }}/build/output/images/Armbian-unofficial_*.img.xz | sort -V | tail -n 1)
+          version=$(echo "$latest_image" | cut -d'_' -f2)  
+          echo "VERSION=$version" >> $GITHUB_ENV
+        
+      - name: Upload image to Release  
+        if: success() 
+        uses: ncipollo/release-action@main
+        with:  
+          tag: "Armbian_${{ github.event.inputs.Version }}_${{ github.event.inputs.RELEASE }}_${{ env.CURRENT_YEAR_MONTH }}"
+          name: "Armbian_${{ github.event.inputs.Version }}_${{ github.event.inputs.RELEASE }}_${{ env.CURRENT_YEAR_MONTH }}"
+          artifacts: "${{ github.workspace }}/build/output/images/*"
+          allowUpdates: true
+          removeArtifacts: false
+          replacesArtifacts: true
+          body: |  
+            ### Armbian Image Information  
+            - Release: ${{ github.event.inputs.RELEASE }}    
+            - Version: ${{ env.VERSION }}  
+            ### Armbian Image Verification  
+            - sha256sum   
+          draft: false  
+          prerelease: false
