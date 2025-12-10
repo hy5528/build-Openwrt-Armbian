@@ -1,19 +1,35 @@
-name: Build Armbian uefi-x86 Board
+name: Build Armbian Customize Board
   
 on:  
   workflow_dispatch:  
-    inputs:
-      ssh:
-        description: 'SSH connection to Actions'
-        required: true
-        default: 'false'
+    inputs:  
+      BOARD:  
+        description: 'Board type'  
+        required: true 
+        default: 'tpm312'
         type: choice
         options:
-          - true
-          - false
+          - fine3399
+          - fmx1-pro
+          - r08
+          - rock960
+          - sg2710
+          - tpm312
+          - tb-ls3399
+          - xiaobao-nas
+          - zysj
+      BRANCH:  
+        description: 'Armbian branch'  
+        default: 'current'  
+        required: false 
+        type: choice 
+        options:
+          - stable
+          - current
+          - edge
       RELEASE:  
         description: 'Release name' 
-        default: 'jammy'
+        default: 'bookworm'
         required: true  
         type: choice
         options:
@@ -28,38 +44,45 @@ on:
         type: choice
         options: 
           - main
-          - v25.05
+          - v25.02
           - v24.11
-      FSTYPE:
-        description: 'Armbian ROOTFS TYPE'
-        default: 'ext4'
-        required: false 
+          - v24.08
+      BUILD_DESKTOP:  
+        description: 'Build desktop environment'  
+        default: 'no'  
+        required: false  
         type: choice
-        options: 
-          - ext4
-          - f2fs
-          - btrfs
-          - nilfs2
-          - xfs
-          - nfs
-
+        options:
+          - no
+      COMPRESS_OUTPUTIMAGE:  
+        description: 'Compress output image'  
+        default: 'sha,xz'  
+        required: false  
+        type: string  
+      BOOT_LOGO:  
+        description: 'Include boot logo'  
+        default: 'yes'  
+        required: false  
+        type: choice 
+        options:
+          - yes
+          - no
 env:
-  TZ: Asia/Jakarta
+  TZ: America/New_York
   
 jobs:  
   build-armbian:  
-    permissions:
-      contents: write
     runs-on: ubuntu-22.04  
     steps:  
       - name: Checkout  
-        uses: actions/checkout@v3    
-
+        uses: actions/checkout@v3  
+      
       - name: Initialization environment
         id: init
         env:
           DEBIAN_FRONTEND: noninteractive
         run: |
+          # 清理 Docker 镜像和软件缓存
           docker_images_ids=$(docker images -q)
           if [ -n "$docker_images_ids" ]; then
             docker rmi $docker_images_ids
@@ -68,6 +91,11 @@ jobs:
           sudo -E apt-get -y purge azure-cli ghc* zulu* llvm* firefox google* dotnet* openjdk* mysql* php* mongodb* dotnet* moby* snapd* android* || true
           sudo -E apt-get -qq autoremove --purge
           sudo -E apt-get -qq clean
+          
+          # 安装兼容的 Python 依赖
+          sudo -E apt-get install -y python3-distutils python3-pip python3-setuptools
+          
+          # 设置时区并创建工作目录
           sudo timedatectl set-timezone "${TZ}"
           sudo mkdir -p /mnt/workdir
           sudo chown $USER:$GROUPS /mnt/workdir
@@ -77,56 +105,47 @@ jobs:
         working-directory: /mnt/workdir
         run: |
           df -hT ${PWD}
-          git clone -q --single-branch --depth=1 --branch=${{ github.event.inputs.Version }} https://github.com/armbian/build.git build
+          git clone -q --single-branch --depth=1 --branch=${{ github.event.inputs.Version }} https://github.com/armbian/build.git build 
           ln -sf /mnt/workdir/build $GITHUB_WORKSPACE/build
- 
-      - name: SSH connection to Actions
-        uses: csexton/debugger-action@master
-        if: (github.event.inputs.ssh == 'true' && github.event.inputs.ssh  != 'false') || contains(github.event.action, 'ssh')
-      - name: "Checkout current repository"
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          clean: false
-          path: current
-          
-      - name: "Copy userpatches to build folder"
-        shell: bash
-        run: |     
-          rsync -av current/patch/. build/
-      - name: Compile Armbian [ ${{ inputs.BOARD }} ${{ inputs.RELEASE }} ]
-        if: (github.event.inputs.ssh != 'true')
-        run: |
+
           cd build/
-          echo "Compiling for board: $BOARD"
-          ./compile.sh BOARD=uefi-x86 RELEASE=${{ inputs.RELEASE }} BRANCH=current BUILD_MINIMAL=yes BUILD_DESKTOP=no KERNEL_CONFIGURE=no \
-            BUILD_ONLY=default EXPERT=yes COMPRESS_OUTPUTIMAGE="sha,xz" SHARE_LOG=yes INSTALL_HEADERS=yes ROOTFS_TYPE=${{ inputs.FSTYPE }}
-          if [ $? -ne 0 ]; then
-            echo "Compilation failed for board: uefi-x86" >&2
-            return 1
-          fi   
+          # 复制 config 和 userpatches 目录文件    
+          cp -rf ${{ github.workspace }}/addboard/config/* config
+          mkdir -p userpatches
+          cp -rf ${{ github.workspace }}/addboard/userpatches/* userpatches
+          ls -la
+  
+      - name: Compile Armbian [ ${{ inputs.BOARD }} ${{ inputs.RELEASE }} ] 
+        run: |  
+          cd /mnt/workdir/build/ 
+          ./compile.sh BOARD=${{ inputs.BOARD }} RELEASE=${{ inputs.RELEASE }} BRANCH=${{ inputs.BRANCH }} BUILD_MINIMAL=no BUILD_DESKTOP=${{ inputs.BUILD_DESKTOP }} \
+                           KERNEL_CONFIGURE=no COMPRESS_OUTPUTIMAGE=${{ inputs.COMPRESS_OUTPUTIMAGE }} BOOT_LOGO=${{ inputs.BOOT_LOGO }} 
           
       - name: Set current year and month  
         run: |  
           echo "CURRENT_YEAR_MONTH=$(date +'%Y%m')" >> $GITHUB_ENV  
 
       - name: Prepare Release Metadata
-        run: |
-          find ${{ github.workspace }}/build/output
+        run: |  
+          # 提取版本号
+          # latest_image=$(ls ${{ github.workspace }}/build/output/images/Armbian-unofficial_*.img.xz | grep -oE 'Armbian-unofficial_[0-9.]+_.*' | sort -V | tail -n 1) 
           latest_image=$(ls ${{ github.workspace }}/build/output/images/Armbian-unofficial_*.img.xz | sort -V | tail -n 1)
           version=$(echo "$latest_image" | cut -d'_' -f2)  
+  
+          # 将版本号设置为环境变量  
           echo "VERSION=$version" >> $GITHUB_ENV
         
       - name: Upload image to Release  
         if: success() 
         uses: ncipollo/release-action@main
         with:  
-          tag: "Armbian_${{ github.event.inputs.Version }}_${{ github.event.inputs.RELEASE }}_${{ env.CURRENT_YEAR_MONTH }}"
-          name: "Armbian_${{ github.event.inputs.Version }}_${{ github.event.inputs.RELEASE }}_${{ env.CURRENT_YEAR_MONTH }}"
-          artifacts: "${{ github.workspace }}/build/output/images/*"
-          allowUpdates: true
-          removeArtifacts: false
-          replacesArtifacts: true
+          tag: "Armbian_${{ github.event.inputs.Version }}_${{ github.event.inputs.RELEASE }}_${{ env.CURRENT_YEAR_MONTH }}"  
+          name: "Armbian_${{ github.event.inputs.Version }}_${{ github.event.inputs.RELEASE }}_${{ env.CURRENT_YEAR_MONTH }}"  
+          artifacts: "${{ github.workspace }}/build/output/images/*"  
+          allowUpdates: true 
+          removeArtifacts: false 
+          replacesArtifacts: true 
+          token: ${{ secrets.GITHUB_TOKEN }}  
           body: |  
             ### Armbian Image Information  
             - Release: ${{ github.event.inputs.RELEASE }}    
@@ -134,4 +153,4 @@ jobs:
             ### Armbian Image Verification  
             - sha256sum   
           draft: false  
-          prerelease: false
+          prerelease: false  
