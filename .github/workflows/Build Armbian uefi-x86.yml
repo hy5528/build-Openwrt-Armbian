@@ -9,22 +9,15 @@ on:
         default: 'tpm312'
         type: choice
         options:
-          - fine3399
-          - fmx1-pro
-          - r08
-          - rock960
-          - sg2710
-          - tpm312
-          - tb-ls3399
-          - xiaobao-nas
-          - zysj
+          - aml-s9xx-box
+        
+      
       BRANCH:  
         description: 'Armbian branch'  
         default: 'current'  
         required: false 
         type: choice 
         options:
-          - stable
           - current
           - edge
       RELEASE:  
@@ -36,7 +29,6 @@ on:
           - jammy
           - bookworm
           - noble
-          - bullseye
       Version:
         description: 'Armbian Version'
         default: 'main'
@@ -108,12 +100,6 @@ jobs:
           git clone -q --single-branch --depth=1 --branch=${{ github.event.inputs.Version }} https://github.com/armbian/build.git build 
           ln -sf /mnt/workdir/build $GITHUB_WORKSPACE/build
 
-          cd build/
-          # 复制 config 和 userpatches 目录文件    
-          cp -rf ${{ github.workspace }}/addboard/config/* config
-          mkdir -p userpatches
-          cp -rf ${{ github.workspace }}/addboard/userpatches/* userpatches
-          ls -la
   
       - name: Compile Armbian [ ${{ inputs.BOARD }} ${{ inputs.RELEASE }} ] 
         run: |  
