@@ -83,7 +83,17 @@ jobs:
       - name: SSH connection to Actions
         uses: csexton/debugger-action@master
         if: (github.event.inputs.ssh == 'true' && github.event.inputs.ssh  != 'false') || contains(github.event.action, 'ssh')
-
+      - name: "Checkout current repository"
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          clean: false
+          path: current
+          
+      - name: "Copy userpatches to build folder"
+        shell: bash
+        run: |     
+          rsync -av current/patch/. build/
       - name: Compile Armbian [ ${{ inputs.BOARD }} ${{ inputs.RELEASE }} ]
         if: (github.event.inputs.ssh != 'true')
         run: |
