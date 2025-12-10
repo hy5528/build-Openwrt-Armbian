@@ -21,7 +21,7 @@ cd /usr/share/keyrings
 wget https://archive.raspberrypi.org/debian/raspberrypi.gpg.key
 # 添加源列表
 cd /etc/apt/sources.list.d
-wget -r -np -nH https://github.com/hy5528/amlogic-s9xxx-armbian/blob/main/list
+wget -r -np -nH https://github.com/hy5528/build-Openwrt-Armbian/tree/main/sources
 
 # 更新软件包
 apt update
