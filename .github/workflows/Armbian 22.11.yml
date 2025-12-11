@@ -51,7 +51,7 @@ jobs:
           sudo apt-get install -y git build-essential debootstrap
       - name: Build Armbian
         run: |
-          git clone --depth=1 --branch=master https://github.com/TooYoungTooSimp/s805-armbian-build build
+          git clone --depth=1 --branch=master https://github.com/mofeng-git/build.git build
           cd build
            sudo ./compile.sh BOARD=onecloud BRANCH=edge RELEASE=bullseye BUILD_MINIMAL=yes BUILD_DESKTOP=no KERNEL_ONLY=no KERNEL_CONFIGURE=no COMPRESS_OUTPUTIMAGE=sha,gpg,img DOWNLOAD_MIRROR=china MAINLINE_MIRROR=tuna EXTRAWIFI=no
           sudo chown $(id -u):$(id -g) -R output/
