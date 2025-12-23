@@ -95,7 +95,7 @@ jobs:
         shell: bash
         run: |  
           rsync -av current/patch/. build/
-          sudo chmod 777 build//patch/userpatches/customize-image.sh
+          sudo chmod 777 build/patch/userpatches/customize-image.sh
           
       - name: Compile Armbian [ ${{ inputs.set_release }} ]
         id: compile
