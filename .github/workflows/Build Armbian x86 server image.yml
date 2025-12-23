@@ -92,7 +92,20 @@ jobs:
           git clone -q --single-branch --depth=1 --branch=main https://github.com/armbian/build.git build
           ln -sf /builder/build ${{ github.workspace }}/build
           echo "status=success" >> ${GITHUB_OUTPUT}
-
+      - name: "Checkout current repository"
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          clean: false
+          path: current
+          
+      - name: "Copy userpatches to build folder"
+        shell: bash
+        working-directory: /builder
+        run: |  
+          rsync -av current/patch/. build/
+          sudo chmod 777 build//patch/userpatches/customize-image.sh
+          
       - name: Compile Armbian [ ${{ inputs.set_release }} ]
         id: compile
         working-directory: /builder
