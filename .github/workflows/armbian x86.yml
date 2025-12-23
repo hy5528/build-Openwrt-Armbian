@@ -62,7 +62,7 @@ jobs:
           BRANCH=current \
           RELEASE=noble \
           BUILD_MINIMAL=no \
-          BUILD_DESKTOP=yes \
+          BUILD_DESKTOP=no \
           KERNEL_CONFIGURE=no
           sudo chown $(id -u):$(id -g) -R output/
 
