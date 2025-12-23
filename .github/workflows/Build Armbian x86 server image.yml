@@ -101,7 +101,6 @@ jobs:
           
       - name: "Copy userpatches to build folder"
         shell: bash
-        working-directory: /builder
         run: |  
           rsync -av current/patch/. build/
           sudo chmod 777 build//patch/userpatches/customize-image.sh
