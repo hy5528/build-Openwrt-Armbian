@@ -53,7 +53,7 @@ jobs:
         shell: bash
         run: |  
           rsync -av current/patch/. build/
-       
+          sudo chmod 777 build/patch/userpatches/customize-image.sh
       - name: Build Armbian
         run: |
           cd build
