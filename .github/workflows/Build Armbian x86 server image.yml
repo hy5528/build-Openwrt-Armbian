@@ -14,14 +14,6 @@ on:
           - bookworm
           - noble
           - jammy
-      publish_docker:
-        description: "Publish Docker image"
-        required: false
-        default: "none"
-        type: choice
-        options:
-          - ophub/armbian
-          - none
 
 env:
   TZ: Etc/UTC
