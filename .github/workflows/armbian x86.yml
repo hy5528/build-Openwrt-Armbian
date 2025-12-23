@@ -47,7 +47,7 @@ jobs:
           ./compile.sh \
           BOARD=uefi-x86 \
           BRANCH=current \
-          RELEASE=jammy \
+          RELEASE=noble \
           BUILD_MINIMAL=no \
           BUILD_DESKTOP=yes \
           KERNEL_CONFIGURE=no
