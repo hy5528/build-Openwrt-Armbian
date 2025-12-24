@@ -363,8 +363,16 @@ on:
         default: 'uefi-x86'
 jobs:
   - name: Checkout armbian
-        run: |
-           git clone --depth=1 --branch=master https://github.com/armbian/build.git build 
+     run: |
+       git clone --depth=1 --branch=master https://github.com/armbian/build.git build 
+  
+        
+build:
+    name: "Build Armbian"
+    runs-on: ubuntu-latest
+    steps:
+
+      - uses: armbian/build@v25.11.1
       - name: "Checkout current repository"
         uses: actions/checkout@v4
         with:
@@ -376,11 +384,6 @@ jobs:
         shell: bash
         run: | 
           rsync -av current/patch/. build/
-        
-  build:
-    name: "Build Armbian"
-    runs-on: ubuntu-latest
-    steps:
         with:
           armbian_token:              "${{secrets.GITHUB_TOKEN}}"
           armbian_target:             "${{inputs.armbian_target}}"
