@@ -363,8 +363,8 @@ on:
         default: 'uefi-x86'
 jobs:
   - name: Checkout armbian
-     run: |
-       git clone --depth=1 --branch=master https://github.com/armbian/build.git build 
+    run: |
+      git clone --depth=1 --branch=master https://github.com/armbian/build.git build 
   - name: "Checkout current repository"
     uses: actions/checkout@v4
     with:
