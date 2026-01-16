@@ -6,7 +6,7 @@ on:
       upload_artifacts:
         description: '上传固件'
         required: true
-        default: 'false'
+        default: 'true'
         type: boolean
       upload_release:
         description: '上传到Release'
@@ -100,4 +100,4 @@ jobs:
         with:
           tag_name: ${{ env.release_tag }}
           name: Armbian ${{ env.release_tag }}
-          files: ./build/output/*
+          files: ./build/output/images/*.xz
