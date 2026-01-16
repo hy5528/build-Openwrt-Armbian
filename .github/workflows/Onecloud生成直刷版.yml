@@ -92,7 +92,7 @@ jobs:
         uses: actions/upload-artifact@main
         with:
           name: armbian-image
-          path: ./build/output/
+          path: ./build/
 
       - name: Upload to release
         if: env.UPLOAD_RELEASE == 'true'
