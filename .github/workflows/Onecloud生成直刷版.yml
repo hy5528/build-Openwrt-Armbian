@@ -100,4 +100,4 @@ jobs:
         with:
           tag_name: ${{ env.release_tag }}
           name: Armbian ${{ env.release_tag }}
-          files: ./build/output/images/*
+          files: ./build/output/*
