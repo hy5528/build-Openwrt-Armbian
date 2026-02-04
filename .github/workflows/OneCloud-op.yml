@@ -46,13 +46,7 @@ jobs:
       run: |
         git clone -b master https://github.com/coolsnowwolf/lede openwrt && cp -r files openwrt && chmod 755 -R openwrt/files 
         cat openwrt/feeds.conf.default
-
-    - name: Load onecloud
-      run: |
-        mv target/linux/amlogic openwrt/target/linux
-        chmod -Rf 755 openwrt/target/linux/amlogic
-        
-        
+    
     - name: Update feeds
       run: |
         cd openwrt
